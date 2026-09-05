@@ -1,0 +1,8 @@
+# Standalone Qwen/MME workflow. Install a torch build matching your hardware.
+# Use a Transformers build that supports the selected checkpoint's model_type.
+torch
+transformers
+accelerate
+Pillow
+qwen-vl-utils
+openai
