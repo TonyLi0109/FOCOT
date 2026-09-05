@@ -1,27 +1,27 @@
 # FOCOT
 
-FOCOT 是探索 Forest-of-Thought 与视觉对象中心推理结合的研究代码项目。本仓库包含基于 VoCoT/VolCano 的早期实现，以及使用 Qwen 视觉语言模型进行 MME 与 MME-RealWorld-Lite 对比实验的独立脚本。
+FOCOT is a research codebase exploring the combination of Forest-of-Thought and visually grounded, object-centric reasoning. This repository includes early implementations based on VoCoT/VolCano and standalone scripts for comparing inference strategies on MME and MME-RealWorld-Lite with Qwen vision-language models.
 
-当前推荐从根目录的 Qwen/MME 工作流开始。`VoCoT-main/` 保留早期模型、训练、数据处理和评测实现，使用独立依赖环境。
+Start with the Qwen/MME workflow in the repository root. The `VoCoT-main/` directory preserves the earlier model, training, data processing, and evaluation code and requires a separate dependency environment.
 
-## 功能与目录
+## Features and Repository Structure
 
-| 文件或目录 | 用途 |
+| File or directory | Purpose |
 |---|---|
-| `mme_qwen_experiment.py` | 数据加载、推理、断点续跑、准确率和 MME 评分 |
-| `api_judge_mme_table.py` | 使用 OpenAI API 对预测结果进行额外评审 |
-| `grounding_ablation_mme.py` | 图像裁剪与文本坐标的 grounding 消融实验 |
-| `run_*.ps1` / `show_*.ps1` | Windows 实验启动与进度查看脚本 |
-| `VoCoT-main/model/` | VolCano 与视觉 FoT 模型实现 |
-| `VoCoT-main/locals/`、`config/`、`eval/`、`utils/` | 早期训练和评测配套代码 |
-| `REBUTTAL_QWEN35_MME_TABLE.md` | 已记录的完整基线与部分样本对比结果 |
-| `GROUNDING_ABLATION_TABLE.md` | grounding 消融结果与实验范围 |
+| `mme_qwen_experiment.py` | Data loading, inference, resumable runs, accuracy, and MME scoring |
+| `api_judge_mme_table.py` | Additional evaluation of predictions through the OpenAI API |
+| `grounding_ablation_mme.py` | Grounding ablations comparing image crops with textual coordinates |
+| `run_*.ps1` / `show_*.ps1` | Windows experiment launchers and progress monitoring scripts |
+| `VoCoT-main/model/` | VolCano and visual FoT model implementations |
+| `VoCoT-main/locals/`, `config/`, `eval/`, `utils/` | Supporting code for the earlier training and evaluation workflow |
+| `REBUTTAL_QWEN35_MME_TABLE.md` | Recorded full baseline results and partial-sample comparisons |
+| `GROUNDING_ABLATION_TABLE.md` | Grounding ablation results and evaluation scope |
 
-数据集、模型权重、逐样本输出、日志、重复下载的上游工程、论文投稿材料和审稿回复不纳入版本控制。根目录的其他 Python 工具属于早期分析辅助脚本，可能需要额外依赖和本地路径配置。
+Datasets, model weights, per-sample outputs, logs, duplicate upstream downloads, submission materials, and reviewer responses are excluded from version control. Other Python utilities in the repository root are earlier analysis scripts and may require additional dependencies and local path configuration.
 
-## 安装
+## Installation
 
-建议为独立实验创建 Python 3.11 环境：
+Create a Python 3.11 environment for the standalone experiments:
 
 ```powershell
 python -m venv .venv
@@ -30,11 +30,11 @@ python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
 
-请安装与硬件匹配的 PyTorch。Qwen3.5 检查点需要支持 `qwen3_5` 的 Transformers 构建；本仓库未提供经过完整验证的锁定环境。若加载时出现不支持模型类型的错误，请先检查所装 Transformers 对该检查点的支持。根目录依赖用于 Qwen/MME，不适用于旧版 VolCano 训练环境。
+Install a PyTorch build compatible with your hardware. Qwen3.5 checkpoints require a Transformers build that supports `qwen3_5`; this repository does not provide a fully validated, locked environment. If loading fails with an unsupported model type, check whether your Transformers installation supports the checkpoint. The root dependencies target Qwen/MME and are separate from the legacy VolCano training environment.
 
-## 数据与模型
+## Data and Models
 
-自行准备有权使用的数据和模型，例如：
+Prepare datasets and model checkpoints that you are authorized to use, for example:
 
 ```text
 data/
@@ -44,70 +44,70 @@ models/
   Qwen3.5-9B/...
 ```
 
-`--data` 支持 MME 目录、JSON、JSONL 或制表符分隔的 TXT。通用 JSON 记录至少包含 `image`、`question`、`answer`；还可包含 `id`、`category`、`pair_id`。MME-RealWorld-Lite 的 `Image`、`Text`、`Answer choices`、`Ground truth`、`Category`、`Subtask` 和 `Task` 字段也受支持。
+`--data` accepts an MME directory, JSON, JSONL, or tab-separated TXT file. Generic JSON records must contain `image`, `question`, and `answer`; optional fields include `id`, `category`, and `pair_id`. The MME-RealWorld-Lite fields `Image`, `Text`, `Answer choices`, `Ground truth`, `Category`, `Subtask`, and `Task` are also supported.
 
-相对图像路径会从标注所在目录以及对应的 `images/`、`imgs/` 等位置查找。请保证路径指向实际图片；图片不会随源码上传。`--model_path` 可以是本地检查点路径或 Hugging Face 模型标识。
+Relative image paths are resolved from the annotation directory and locations such as its `images/` and `imgs/` subdirectories. Ensure that paths point to actual images; dataset images are not distributed with the source code. `--model_path` accepts a local checkpoint path or a Hugging Face model identifier.
 
-## 快速运行
+## Quick Start
 
-先检查数据加载和评分流程，无需加载模型：
+Validate data loading and scoring without loading a model:
 
 ```powershell
 python mme_qwen_experiment.py --data data/MME-RealWorld-Lite.json --method vocot --limit 8 --dry_run --output_dir outputs/dry_run
 ```
 
-**`--dry_run` 直接使用标签作为预测，仅用于检查流程，产生的分数不能作为模型实验结果。**
+**`--dry_run` uses ground-truth labels as predictions. It only checks the pipeline; its scores must not be reported as model results.**
 
-运行 VoCoT 风格提示基线：
+Run the VoCoT-style prompt baseline:
 
 ```powershell
 python mme_qwen_experiment.py --data data/MME-RealWorld-Lite.json --model_path models/Qwen3.5-9B --method vocot --max_pixels 65536 --max_new_tokens 40 --resume --output_dir outputs/vocot
 ```
 
-运行结构化 FOCOT：
+Run structured FOCOT:
 
 ```powershell
 python mme_qwen_experiment.py --data data/MME-RealWorld-Lite.json --model_path models/Qwen3.5-9B --method focot --focot_mode structured --focot_branch_tokens 40 --max_pixels 65536 --max_new_tokens 40 --resume --output_dir outputs/focot
 ```
 
-首次推理可加 `--limit 8`。默认禁用生成缓存与 Qwen 内部 thinking；可通过 `--use_cache`、`--enable_thinking` 开启。显存占用随模型、图片分辨率和输出长度变化。
+For an initial inference check, add `--limit 8`. Generation caching and Qwen internal thinking are disabled by default; enable them with `--use_cache` and `--enable_thinking`. GPU memory usage depends on the model, image resolution, and output length.
 
-支持的方法：`vanilla`、`standard_cot`、`self_cons_cot`、`standard_fot`、`vocot`、`focot`。这些名称在独立脚本中代表提示或推理策略，并不意味着加载了原论文的训练权重。`self_cons_cot` 和 `standard_fot` 是单次提示基线；`focot --focot_mode structured` 则生成多个分支，进行协作评分和投票。当前分支提示包含对选项 E 的偏好约束，比较实验时应记录该设定。
+Supported methods are `vanilla`, `standard_cot`, `self_cons_cot`, `standard_fot`, `vocot`, and `focot`. In the standalone script, these names identify prompts or inference strategies; they do not imply that the original papers' trained weights are loaded. `self_cons_cot` and `standard_fot` are single-prompt baselines. `focot --focot_mode structured` generates multiple branches and applies collaborative scoring and voting. The current branch prompt includes a preference constraint concerning option E; record this setting when comparing experiments.
 
-可使用 `--anchor_predictions` 引入已有基线预测作为额外节点，使用 `--anchor_weight` 设置权重。这与不使用 anchor 的实验应分别报告。已有 PowerShell 启动脚本保留各自实验参数，运行前请核对输出目录、anchor 输入和是否会自动调用付费 API 评审。
+Use `--anchor_predictions` to introduce existing baseline predictions as an additional node and `--anchor_weight` to set its weight. Report experiments with and without anchors separately. The PowerShell launchers retain their respective experiment parameters. Before running them, check output directories, anchor inputs, and whether they automatically invoke paid API evaluation.
 
-PowerShell 启动脚本默认使用 PATH 中的 `python`，也可通过 `FOCOT_PYTHON` 环境变量指定解释器绝对路径。
+PowerShell launchers use `python` from PATH by default. Set the `FOCOT_PYTHON` environment variable to specify an absolute interpreter path.
 
-## 输出与指标
+## Outputs and Metrics
 
-每次运行在 `--output_dir` 下写入 `{method}_predictions.json` 与 `{method}_summary.json`。使用 `--resume` 可继续已有预测；仅在数据、模型和推理参数一致时复用输出目录。
+Each run writes `{method}_predictions.json` and `{method}_summary.json` to `--output_dir`. Use `--resume` to continue from existing predictions. Reuse an output directory only when the data, model, and inference parameters are unchanged.
 
-传统 MME 使用类别内 accuracy 与成对 accuracy-plus 计算分数。MME-RealWorld-Lite 使用选项准确率；脚本的表格映射中 `Obj.` 与 `Ima.` 都对应 Perception，`Log.` 对应 Reasoning，`Acc.` 与 `Total` 都对应总体准确率。这些列不是独立的对象检测或图像质量指标，也不是 API judge 的评分。
+Original MME scores combine per-category accuracy and paired accuracy-plus. MME-RealWorld-Lite uses answer-choice accuracy. In the script's table mapping, both `Obj.` and `Ima.` correspond to Perception, `Log.` corresponds to Reasoning, and both `Acc.` and `Total` correspond to overall accuracy. These columns are not independent object detection or image quality metrics, nor are they API judge scores.
 
-已有记录如下（来自仓库中的结果文档，本次整理未重跑模型）：
+The following results are recorded in the repository's result documents. Model inference was not rerun during repository preparation.
 
-| 方法 | 样本范围 | Accuracy (%) |
+| Method | Evaluation scope | Accuracy (%) |
 |---|---|---:|
-| VOCOT | 完整 1919 条 | 35.44 |
-| VOCOT | 相同的前 137 条 | 29.20 |
-| FOCOT v2 structured | 相同的前 137 条 | 31.39 |
+| VOCOT | Full set of 1,919 samples | 35.44 |
+| VOCOT | Same prefix of 137 samples | 29.20 |
+| FOCOT v2 structured | Same prefix of 137 samples | 31.39 |
 
-137 条对比是仅含 Perception 的初步结果，不能作为 FOCOT 全集成绩，也不能视为当前 v3/anchor 脚本的复现结果。Grounding 消融使用 20 条 MME position 样本，属于小规模代理实验，并非完整 GQA 评测。详细范围见 [实验结果](REBUTTAL_QWEN35_MME_TABLE.md)。
+The 137-sample comparison is preliminary and contains only Perception samples. It is neither a full-benchmark FOCOT result nor a reproduction result for the current v3/anchor scripts. The grounding ablation uses 20 MME position samples as a small proxy experiment, not a full GQA evaluation. See the [experiment results](REBUTTAL_QWEN35_MME_TABLE.md) for the detailed scope.
 
-## 可选 API 评审
+## Optional API Evaluation
 
-API 密钥仅从环境变量读取，不应写入源码或提交到 Git。运行前在当前终端配置 `OPENAI_API_KEY`，再执行：
+API keys are read from environment variables and should never be embedded in source code or committed to Git. Set `OPENAI_API_KEY` in your current terminal, then run:
 
 ```powershell
 python api_judge_mme_table.py --method_file VOCOT=outputs/vocot/vocot_predictions.json FOCOT=outputs/focot/focot_predictions.json --judge_model YOUR_JUDGE_MODEL --output_dir outputs/api_judge --resume
 ```
 
-将 `YOUR_JUDGE_MODEL` 替换为账号可访问的模型。此步骤会把评审所需文本及默认启用的图片发送至 API，并产生费用。它独立于本地答案匹配评分。
+Replace `YOUR_JUDGE_MODEL` with a model available to your account. This step sends the required evaluation text and, by default, images to the API and incurs usage charges. It is separate from local answer-matching evaluation.
 
-## 早期 VoCoT/VolCano 实现
+## Legacy VoCoT/VolCano Implementation
 
-参见 [保留的上游 README](VoCoT-main/README.md)。在独立环境中使用 `VoCoT-main/requirements.txt`，根据 `config/` 中的占位路径准备数据与权重。该依赖清单来自本地 `VOCOT/requirements.txt`，包含旧版 Transformers，不要与根目录 Qwen 环境混装。早期训练和评测尚未在本次仓库整理中验证。
+See the [retained upstream README](VoCoT-main/README.md). Use `VoCoT-main/requirements.txt` in a separate environment and prepare data and weights according to the placeholder paths in `config/`. This dependency list was copied from the local `VOCOT/requirements.txt` and includes an older Transformers version; keep it separate from the root Qwen environment. The legacy training and evaluation workflows were not validated during repository preparation.
 
-## 来源与许可
+## Attribution and Licensing
 
-本项目包含基于 VoCoT 的代码改动，并受 Forest-of-Thought 启发。来源说明见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。当前未为整个项目声明统一开源许可证；第三方代码、模型和数据仍遵循各自原有条款。
+This project contains modifications based on VoCoT and draws inspiration from Forest-of-Thought. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for source attribution. No repository-wide open-source license is currently declared; third-party code, models, and datasets remain subject to their respective terms.
